@@ -2,17 +2,13 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Senin oluşturduğun mızrak parçalarını içeri alıyoruz
-import engine
-import learn
-import economy
-
 app = FastAPI(title="Sapiens AI Core")
 
-# Sitemizin (Frontend) bu koda erişebilmesi için güvenlik kapısını açıyoruz
+# GÖRÜNMEZ DUVARI YIKAN KISIM (CORS Ayarı)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Global olacağımız için her yere açık
+    allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -20,7 +16,7 @@ app.add_middleware(
 # JavaScript'ten gelecek veri kalıbı
 class UserSpeech(BaseModel):
     text: str
-    user_id: str = "lion_1" # Şimdilik sabit, ileride dinamik olacak
+    user_id: str = "lion_1"
 
 @app.get("/")
 async def status():
@@ -28,22 +24,27 @@ async def status():
 
 @app.get("/daily-task")
 async def get_task():
-    # learn.py içindeki günlük görevi çekip siteye yolluyoruz
-    return learn.gunluk_gorev_getir()
+    return {
+        "task": "Bugün bir işe başlayacağını söyle.",
+        "target": "I'm gonna start working.",
+        "tip": "Unutma, 'going to' dersen mızrağın körelir!",
+        "reward": 0.6,
+        "currency": "cent"
+    }
+
+@app.get("/check-grammar")
+async def check_grammar(text: str):
+    text = text.lower()
+    # Senin meşhur 'gonna/wanna' kuralın
+    if "gonna" in text or "wanna" in text:
+        return {"status": "success", "message": "Harika! 'gonna/wanna' kullandın. +60 cent kazandın!"}
+    else:
+        return {"status": "error", "message": "Mızrağın köreldi! 'going to' yerine 'gonna' kullanmalısın."}
 
 @app.post("/analyze")
 async def analyze(data: UserSpeech):
-    # 1. Önce economy.py'dan kullanıcının hakkı var mı bakalım
-    acc = economy.bakiye_kontrol(data.user_id)
-    if acc["days_left"] <= 0:
-        return {"reply": "Mızrağının süresi dolmuş aslanım, 60 cente tazelemeye ne dersin?"}
-
-    # 2. engine.py ile sesi analiz edip 'saf dil' geri bildirimi veriyoruz
-    feedback = engine.saf_dil_kontrol(data.text)
-    
-    return {"reply": feedback, "days_left": acc["days_left"]}
-
-if __name__ == "__main__":
-    import uvicorn
-    # Terminale yazmak yerine direkt dosyayı çalıştırarak başlatabilirsin
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    # Şimdilik basit mantık, ileride engine.py'a bağlarız
+    text = data.text.lower()
+    if "gonna" in text or "wanna" in text:
+        return {"reply": "Mızrağın keskin aslanım, tam isabet!", "status": "success"}
+    return {"reply": "Mızrağın ucu körelmiş, 'gonna' kullan!", "status": "fail"}
