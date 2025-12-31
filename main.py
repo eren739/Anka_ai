@@ -2,25 +2,28 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-app = FastAPI(title="Sapiens AI Core")
+# 1. ANKA AI Uygulamasını Başlatıyoruz
+app = FastAPI(title="ANKA AI Core")
 
-# GÖRÜNMEZ DUVARI YIKAN KISIM (CORS Ayarı)
+# 2. CORS GÜVENLİK DUVARINI YIKAN KISIM (Kritik!)
+# Bu blok olmazsa Spck Editor "Failed to fetch" hatası verir.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # Tüm dünyadan gelen isteklere kapıyı aç
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["*"], # GET, POST her şeye izin ver
     allow_headers=["*"],
 )
 
-# JavaScript'ten gelecek veri kalıbı
+# 3. Veri Modeli (Analiz için kullanılacak)
 class UserSpeech(BaseModel):
     text: str
-    user_id: str = "lion_1"
+
+# --- ROTALAR (ENDPOINTS) ---
 
 @app.get("/")
 async def status():
-    return {"message": "Mızrak keskin, sistem ayakta!", "version": "0.1"}
+    return {"status": "online", "message": "ANKA AI küllerinden doğdu, sistem ayakta!"}
 
 @app.get("/daily-task")
 async def get_task():
@@ -35,16 +38,22 @@ async def get_task():
 @app.get("/check-grammar")
 async def check_grammar(text: str):
     text = text.lower()
-    # Senin meşhur 'gonna/wanna' kuralın
+    # Senin efsane 'gonna/wanna' kuralın
     if "gonna" in text or "wanna" in text:
-        return {"status": "success", "message": "Harika! 'gonna/wanna' kullandın. +60 cent kazandın!"}
+        return {
+            "status": "success", 
+            "message": "Harika! 'gonna/wanna' kullandın. +60 cent kazandın!"
+        }
     else:
-        return {"status": "error", "message": "Mızrağın köreldi! 'going to' yerine 'gonna' kullanmalısın."}
+        return {
+            "status": "error", 
+            "message": "Mızrağın köreldi! 'going to' yerine 'gonna' veya 'wanna' kullanmalısın."
+        }
 
+# İleride daha karmaşık analizler yapacağın kısım
 @app.post("/analyze")
 async def analyze(data: UserSpeech):
-    # Şimdilik basit mantık, ileride engine.py'a bağlarız
     text = data.text.lower()
     if "gonna" in text or "wanna" in text:
-        return {"reply": "Mızrağın keskin aslanım, tam isabet!", "status": "success"}
+        return {"reply": "Mızrağın keskin, tam isabet!", "status": "success"}
     return {"reply": "Mızrağın ucu körelmiş, 'gonna' kullan!", "status": "fail"}
